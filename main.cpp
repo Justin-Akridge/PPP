@@ -1,78 +1,76 @@
 #include <iostream>
 #include <string>
-#include "token-stream.h"
 
-double expression();
-double term(Token_stream);
-double primary(Token_stream);
 
-void error(std::string message) {
-  std::cerr << message << '\n';
-}
+/* Grammer:
+ *
+ * Expression:
+ *    Term
+ *    Expression '+' Term
+ *    Expression '-' Term
+ * Term
+ *    Primary
+ *    Term '*' Primary
+ *    Term '/' Primary
+ *    Term '%' Primary
+ * Primary:
+ *    Number
+ *    '(' Expression ')'
+ * Number:
+ *    Floating point-literal
+ */
 
-double primary(Token_stream ts) {
-    Token t = ts.get();
-    switch(t.kind) {
-        case '(':
-        {
-            double d = expression();
-            t = ts.get();
-            if (t.kind != ')') error("Expected ')'");
-            return d;
-        }
-        case '8':
-            return t.value;
-        default:
-            error("primary expected");
-    }
-    return 0;
-}
+class Token {
+public:
+  Token(char ch) : kind(ch), val(0) {}
+  Token(char ch, double value) : kind(ch), val(value) {}
+  char kind;
+  double val;
+};
 
-double term(Token_stream ts) {
-    double left = primary(ts);
-    Token t = ts.get();
-    while (true) {
-        switch(t.kind) {
-            case '*':
-                left *= primary(ts);
-                break;
-            case '/':
-            {
-                double d = primary(ts);
-                if (d == 0) {
-                    error("Cannot divide by 0\n");
-                    break;
-                }
-                left /= d;
-                break;
-            }
-            default: 
-                ts.putback(t);
-                return left;
-        }
-        t = ts.get();
-    }
-}
+Token get_token();
 
-double expression(Token_stream ts) {
-  double left = term(ts);
-  Token t = ts.get();
-  while(true) {
-    switch(t.kind) {
+double expression() {
+  double left = term();
+  Token t = get_token();
+  while (true) {
+    switch (t.kind) {
       case '+':
-        left += term(ts);
+        left += term();
+        t = get_token();
         break;
       case '-':
-        left -= term(ts);
+        left -= term();
+        t = get_token();
         break;
-      default: 
-        ts.putback(t);
+      default:
         return left;
     }
-    t = ts.get();
   }
-  return left;
 }
+
+//deals with *, /, and %
+double term() {
+  double left = primary();
+  Token t = get_token();
+  while (true) {
+    switch (t.kind) {
+      case '*':
+        left *= primary();
+        t = get_token();
+        break;
+      case '/':
+        left /= primary();
+        t = get_token();
+        break;
+      default:
+        return left;
+    }
+  }
+}
+
+//deals with numbers and ()
+double primary() {}
 
 int main() {
   try {
