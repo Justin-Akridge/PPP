@@ -29,6 +29,9 @@ public:
 };
 
 Token get_token();
+double expression();
+double term();
+double primary();
 
 double expression() {
   double left = term();
@@ -60,9 +63,16 @@ double term() {
         t = get_token();
         break;
       case '/':
-        left /= primary();
-        t = get_token();
-        break;
+        {
+          double d = primary();
+          if (d == 0) {
+            exit(1);
+            std::cerr << "Cannot divide by zero";
+          }
+          left /= d;
+          t = get_token();
+          break;
+        }
       default:
         return left;
     }
@@ -70,7 +80,29 @@ double term() {
 }
 
 //deals with numbers and ()
-double primary() {}
+double primary() {
+  Token t = get_token();
+  while (true) {
+    switch (t.kind) {
+      case '(':
+        {
+          double d = expression();
+          t = get_token();
+          if (t.kind != ')') {
+            std::cerr << "Error: ')' expected";
+            exit(1);
+          }
+          return d;
+        }
+        break;
+      case '8':
+        return t.val;
+      default:
+        std::cerr << "primary expected";
+        exit(1);
+    }
+  }
+}
 
 int main() {
   try {
